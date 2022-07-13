@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+    db:
+        container_name: dbmarketvue
+        image: mysql:8.0.28
+        ports:
+            - 3312:3306
+        volumes:
+            - db:/var/lib/mysql
+            - dbconf:/etc/mysql/conf.d
+        #restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: rootmout
+            MYSQL_DATABASE: marketvue
+            MYSQL_USER: mout
+            MYSQL_PASSWORD: mout
+        networks:
+            - bdd
+
+#    phpmyadmin:
+#        container_name: phpmyadminmymarketpets
+#        depends_on:
+#            - db
+#        image: phpmyadmin/phpmyadmin
+#        #restart: always
+#        ports:
+#            - 7779:8098
+#        environment:
+#            PMA_HOST: db
+#            MYSQL_ROOT_PASSWORD: rootmout
+#        networks:
+#            - bdd
+
+    web:
+        build:
+            context: ./Docker/conf/php
+        image: php:8.1-apache
+        container_name: webmarketvue
+        ports:
+            - 8090:80
+        volumes:
+            - apacheconf:/etc/apache2/sites-enabled
+            - phpconf:/usr/local/etc/php/conf.d
+            - site:/app
+        depends_on:
+            - db
+        networks:
+            - bdd
+
+    redis:
+        image: redis:6.2-alpine
+        networks:
+            - bdd
+        volumes:
+            - redisdata:/data
+
+networks:
+    bdd:
+        driver: bridge
+
+volumes:
+    apacheconf:
+        driver: local
+        driver_opts:
+            type: 'none'
+            o: 'bind'
+            device: '/var/www/marketvue/Docker/conf/apache/sites-enabled'
+    phpconf:
+        driver: local
+        driver_opts:
+            type: 'none'
+            o: 'bind'
+            device: '/var/www/marketvue/Docker/conf/php/conf.d'
+    dbconf:
+        driver: local
+        driver_opts:
+            type: 'none'
+            o: 'bind'
+            device: '/var/www/marketvue/Docker/conf/db'
+    site:
+        driver: local
+        driver_opts:
+            type: 'none'
+            o: 'bind'
+            device: '/var/www/marketvue'
+    db:
+        driver: local
+        driver_opts:
+            type: 'none'
+            o: 'bind'
+            device: '/var/www/marketvue/Docker/data/db'
+    redisdata:
+        driver: local
+        driver_opts:
+            type: 'none'
+            o: 'bind'
+            device: '/var/www/marketvue/Docker/data/redis'
